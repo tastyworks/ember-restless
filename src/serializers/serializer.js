@@ -35,11 +35,11 @@ var Serializer = Ember.Object.extend({
     if (typeof type === 'string') {
       // Globals support
       if (type.split('.').length > 1) {
-        return Ember.get(Ember.lookup, type); 
+        return Ember.get(Ember.lookup, type);
       }
 
       // Container support
-      return RESTless.lookupFactory('model:' + type);
+      return Ember.getOwner(this).factoryFor('model:' + type);
     }
     return type;
   },

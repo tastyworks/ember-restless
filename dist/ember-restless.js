@@ -1,7 +1,7 @@
 /**
  * ember-restless
  * @overview  A lightweight data model library for Ember.js
- * @version   0.7.13
+ * @version   0.7.14
  * @author    Garth Poitras <garth@bustle.com>
  * @license   MIT
  * @copyright (c) 2013-2015 Bustle Labs
@@ -16,7 +16,7 @@
   */
 
   var libraries = Ember.libraries;
-  var VERSION = '0.7.13';
+  var VERSION = '0.7.14';
 
   /**
     @class RESTless
@@ -210,6 +210,15 @@
     }
   });
 
+  /**
+    Serializers handle transforming data to and from raw data and Models.
+    This is a base class to be subclassed. Subclasses should implement:
+    `deserialize()`, `deserializeProperty()`, `deserializeMany()`, `serialize()`, `serializeProperty()`, `serializeMany()`
+
+    @class Serializer
+    @namespace RESTless
+    @extends Ember.Object
+  */
   var Serializer = Ember.Object.extend({
     /**
       Type of data to serialize.
@@ -236,11 +245,11 @@
       if (typeof type === 'string') {
         // Globals support
         if (type.split('.').length > 1) {
-          return Ember.get(Ember.lookup, type); 
+          return Ember.get(Ember.lookup, type);
         }
 
         // Container support
-        return RESTless.lookupFactory('model:' + type);
+        return Ember.getOwner(this).factoryFor('model:' + type);
       }
       return type;
     },
@@ -342,6 +351,8 @@
     }
   });
 
+  // Date.prototype.toISOString shim
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
   var toISOString = Date.prototype.toISOString || function() {
     function pad(number) {
       if ( number < 10 ) {
@@ -392,6 +403,11 @@
     }
   });
 
+  /**
+    @property JSONTransforms
+    @type Object
+    @for RESTless
+  */
   var JSONTransforms = {
     'string'  : StringTransform.create(),
     'number'  : NumberTransform.create(),
@@ -399,7 +415,7 @@
     'date'    : DateTransform.create()
   };
 
-  var noop = Ember.K;
+  var noop = function() {};
 
   /**
     The State Mixin is responsible for keeping state and
@@ -549,9 +565,9 @@
     copyState: function(clone) {
       var mixins = State.mixins;
       var props = mixins[mixins.length-1].properties, p;
-      
+
       Ember.beginPropertyChanges(clone);
-      for(p in props) { 
+      for(p in props) {
         if(props.hasOwnProperty(p) && typeof props[p] !== 'function') {
           clone.set(p, this.get(p));
         }
@@ -1876,6 +1892,15 @@
     }
   });
 
+  /**
+    The Client is the top level store, housing the default adapter and configurations.
+    The client will be automatically detected and set from your App namespace.
+    Setting a client is optional and will automatically use a base client.
+
+    @class Client
+    @namespace RESTless
+    @extends Ember.Object
+  */
   var Client = Ember.Object.extend({
     /**
       The default adapter for all models.
@@ -1897,29 +1922,23 @@
       application.addObserver('Client', application, function() {
         RESTless.set('client', this.Client);
       });
-
-      var container = application.__container__;
-      RESTless.lookupFactory = function() {
-        return container.lookupFactory.apply(container, arguments);
-      };
     }
   });
 
-  Ember.Application.instanceInitializer({
-    name: 'RESTless.Client',
-    initialize: function(applicationInstance) {
-      RESTless.lookupFactory = function() {
-        return applicationInstance._lookupFactory.apply(applicationInstance, arguments);
-      };
-    }
-  });
+  /**
+    A read-only model. Removes property change observers and write methods.
+    Helps improve performance when write functionality is not needed.
 
+    @class ReadOnlyModel
+    @namespace RESTless
+    @extends RESTless.Model
+  */
   var ReadOnlyModel = Model.extend({
     serialize: null,
     saveRecord: null,
     deleteRecord: null,
     didDefineProperty: null,
-    _onPropertyChange: Ember.K
+    _onPropertyChange: function() {}
   });
 
   /** Copied from: <https://github.com/emberjs/data/blob/master/packages/ember-data/lib/ext/date.js> **/
@@ -1982,6 +2001,9 @@
     Date.parse = Ember.Date.parse;
   }
 
+  /*
+    Export public modules to namespace
+  */
   RESTless.Client = Client;
   RESTless.Adapter = Adapter;
   RESTless.RESTAdapter = RESTAdapter;

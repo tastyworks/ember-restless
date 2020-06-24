@@ -13,7 +13,7 @@ var ReadOnlyModel = Model.extend({
   saveRecord: null,
   deleteRecord: null,
   didDefineProperty: null,
-  _onPropertyChange: Ember.K
+  _onPropertyChange: function() {}
 });
 
 export default ReadOnlyModel;

@@ -1,4 +1,4 @@
-var noop = Ember.K;
+var noop = function() {};
 
 /**
   The State Mixin is responsible for keeping state and
@@ -148,9 +148,9 @@ var State = Ember.Mixin.create( Ember.Evented, {
   copyState: function(clone) {
     var mixins = State.mixins;
     var props = mixins[mixins.length-1].properties, p;
-    
+
     Ember.beginPropertyChanges(clone);
-    for(p in props) { 
+    for(p in props) {
       if(props.hasOwnProperty(p) && typeof props[p] !== 'function') {
         clone.set(p, this.get(p));
       }

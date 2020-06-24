@@ -31,20 +31,6 @@ Ember.Application.initializer({
     application.addObserver('Client', application, function() {
       RESTless.set('client', this.Client);
     });
-
-    var container = application.__container__;
-    RESTless.lookupFactory = function() {
-      return container.lookupFactory.apply(container, arguments);
-    };
-  }
-});
-
-Ember.Application.instanceInitializer({
-  name: 'RESTless.Client',
-  initialize: function(applicationInstance) {
-    RESTless.lookupFactory = function() {
-      return applicationInstance._lookupFactory.apply(applicationInstance, arguments);
-    };
   }
 });
 
